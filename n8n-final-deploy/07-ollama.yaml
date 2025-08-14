@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-models-pvc
+  namespace: n8n
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  storageClassName: "local-path"
+  resources:
+    requests:
+      # Diamo spazio per scaricare più modelli
+      storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-service
+  namespace: n8n
+spec:
+  selector:
+    app: ollama
+  ports:
+    - protocol: TCP
+      port: 11434
+      targetPort: 11434
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama-deployment
+  namespace: n8n
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      # === Sfida 1: Scheduling su un nodo specifico ===
+      # Forza questo pod a girare solo sul nodo che abbiamo etichettato
+      nodeSelector:
+        app-llm: "ollama"
+      
+      containers:
+      - name: ollama
+        image: ollama/ollama:latest
+        ports:
+        - containerPort: 11434
+        
+        # === Sfida 2: Persistenza dei Modelli ===
+        # Monta il volume persistente nella directory dove Ollama salva i modelli
+        volumeMounts:
+        - name: ollama-models
+          mountPath: /root/.ollama
+          
+        # === Sfida 3: Gestione delle Risorse ===
+        # Dedica una buona porzione delle risorse del Pi a Ollama
+        resources:
+          requests:
+            memory: "3Gi" # Richiede almeno 3GB di RAM
+            cpu: "1"      # Richiede almeno 1 CPU
+          limits:
+            memory: "7Gi" # Non può usare più di 6GB di RAM
+            cpu: "3"      # Non può usare più di 3 CPU
+            
+      volumes:
+      - name: ollama-models
+        persistentVolumeClaim:
+          claimName: ollama-models-pvc

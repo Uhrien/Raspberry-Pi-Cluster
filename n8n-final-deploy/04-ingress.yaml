@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: n8n-ingress
+  namespace: n8n
+  annotations:
+    # Dice a cert-manager di usare il nostro ClusterIssuer per ottenere un certificato
+    cert-manager.io/cluster-issuer: "letsencrypt-prod" 
+    
+    # Le solite annotazioni di Traefik per abilitare HTTPS e il redirect
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  
+  #====================================================#
+  #==   QUESTA SEZIONE È FONDAMENTALE E MANCAVA        ==#
+  #====================================================#
+  tls:
+  - hosts:
+    - n8n.technopia.stream
+    # cert-manager creerà e popolerà questo Secret per noi
+    secretName: n8n-tls-prod-secret 
+    
+  rules:
+    - host: n8n.technopia.stream
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: n8n-service
+                port:
+                  name: http

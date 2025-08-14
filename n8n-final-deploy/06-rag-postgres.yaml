@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  # Nome diverso per il secret
+  name: rag-postgres-secrets
+  namespace: n8n
+type: Opaque
+stringData:
+  POSTGRES_USER: "postgres"
+  POSTGRES_PASSWORD: "mysecretpasss12" # Usa una password diversa!
+  POSTGRES_DB: "postgres"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # Nome diverso per il servizio
+  name: rag-postgres-service
+  namespace: n8n
+spec:
+  selector:
+    # Etichetta diversa per non confondersi con l'altro DB
+    app: rag-postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  # Nome diverso per lo StatefulSet
+  name: rag-postgres-statefulset
+  namespace: n8n
+spec:
+  serviceName: "rag-postgres-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-postgres
+  template:
+    metadata:
+      labels:
+        app: rag-postgres
+    spec:
+      containers:
+      - name: postgres
+        # Puoi usare un'immagine specializzata con pgvector se necessario
+        # Per ora usiamo quella standard. Potremmo doverla cambiare.
+        image: postgres:15
+        ports:
+        - containerPort: 5432
+        envFrom:
+        - secretRef:
+            name: rag-postgres-secrets
+        volumeMounts:
+        - name: rag-postgres-data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: rag-postgres-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "local-path" 
+      resources:
+        requests:
+          # Dagli una dimensione adeguata ai tuoi documenti
+          storage: 5Gi
