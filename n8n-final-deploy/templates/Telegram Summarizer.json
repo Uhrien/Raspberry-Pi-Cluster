@@ -1,0 +1,419 @@
+{
+  "name": "Telegram Summarizer",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "chatIds": "390430482",
+          "userIds": "390430482"
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -432,
+        32
+      ],
+      "id": "6dc8d5d9-381b-4e05-8a7e-4274c846b141",
+      "name": "Telegram Trigger",
+      "webhookId": "fb4dbf1b-484e-4d7c-9fc2-064265726edd",
+      "credentials": {
+        "telegramApi": {
+          "id": "zh5BiaxMbEGVeqrQ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.voice.file_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "7c8c05d9-a22c-403e-89ef-dc06a726d156"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "463d2ab7-8ee4-457b-9138-cdf2b67eb7d0",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Test"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a9c78b68-13bc-4a47-a9eb-63ae9464ac29",
+                    "leftValue": "error",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Error"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -208,
+        16
+      ],
+      "id": "57945ff5-3fe4-4a6b-81e8-a07feb088e0e",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cf275ef7-3f89-4286-b9a0-c45af16e8abf",
+              "name": "=text",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        32
+      ],
+      "id": "7fc5ef9c-d962-4dc8-b983-eec9051ce8a1",
+      "name": "Text message"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        32,
+        -256
+      ],
+      "id": "ecd68909-27b6-43c8-ad2a-4b05d776ad23",
+      "name": "Get a file",
+      "webhookId": "0f39697d-c0f8-4b0a-8965-0c992b30790d",
+      "credentials": {
+        "telegramApi": {
+          "id": "zh5BiaxMbEGVeqrQ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert personal assistant specializing in knowledge management. Your task is to process raw, transcribed text from voice notes and reformat it into a structured, clear, and professional document in English. The goal is to capture the core ideas, organize them logically, and make them easily searchable and usable for future reference.\nInstructions:\nAnalyze the Input: Read the entire transcribed text to understand the main topic, key points, and any specific instructions or actions mentioned.\nGenerate a Title: Create a concise and descriptive title for the note.\nSummarize: Write a one or two-sentence summary that captures the essence of the note.\nExtract Key Points: List the main ideas as clear, well-articulated bullet points. If the input is scattered, group related ideas together.\nIdentify Action Items: If any tasks, to-dos, or follow-ups are mentioned, list them in a separate \"Action Items\" section. If there are none, omit this section.\nAdd Relevant Tags: Generate 3-5 relevant keywords or tags in lowercase to make the note easily searchable (e.g., project-management, ai-research, marketing-strategy).\nLanguage and Tone: The final output must be in English. Maintain a professional, clear, and objective tone, cleaning up any colloquialisms or filler words from the original transcription.\nFormat the output as follows:\nTitle: [Generated Title]\nSummary: [Generated Summary]\nKey Points:\n[Point 1]\n[Point 2]\n...\nAction Items:\n[Action Item 1]\n[Action Item 2]\n...\nTags: #[tag1] #[tag2] #[tag3]\nRaw Input Text:\n {{ $json.text }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        32
+      ],
+      "id": "81736dca-5abe-4600-93bd-9b89a20ff6c1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-nano-2025-08-07",
+          "mode": "list",
+          "cachedResultName": "gpt-5-nano-2025-08-07"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        160
+      ],
+      "id": "8543cde9-ad92-4d1c-9cdf-891e8f169ee4",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Dmf2aj0AvS6ATlcJ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "390430482",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        912,
+        352
+      ],
+      "id": "f3b5cc5d-7411-4456-9437-b93381d7b784",
+      "name": "Send a text message",
+      "webhookId": "f6783daa-e0d3-45c0-9fba-aa7f0fc97eb0",
+      "credentials": {
+        "telegramApi": {
+          "id": "zh5BiaxMbEGVeqrQ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9e9ba8d2-4e08-4e68-b310-d3eff7245086",
+              "name": "Error",
+              "value": "Si è rotto qualcosa prima dello switch sul flusso n8n. Please vai a controllare quanto prima, o non funzionerà una ciolla di niente.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        352
+      ],
+      "id": "41688357-dd14-4d2e-aa0a-6bf3124fff9e",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "content": "Ok, completato il workflow per la trascrizione in locale.\nVorrei adesso che ci fosse anche il parsing in locale con un modello tipo Gemma / Qwen3."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        240,
+        -464
+      ],
+      "typeVersion": 1,
+      "id": "232fdf63-8b89-4fbb-8349-5314de805b60",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://192.168.1.101:8000/transcribe",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "multipart/form-data"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        288,
+        -256
+      ],
+      "id": "9996c0d7-a8cb-4de0-b5c6-21190b300edc",
+      "name": "Whisper Local Transcribe"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Whisper Local Transcribe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text message": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Whisper Local Transcribe": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "dfec6590-5165-44da-af3f-024b0a49097f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c435727358768b1030bf4465f8614c3a7fd2d2d6c7f9ac8aab7494c972796233"
+  },
+  "id": "lnC0rBf04MLjKbrx",
+  "tags": []
+}
